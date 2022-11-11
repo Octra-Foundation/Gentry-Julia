@@ -16,3 +16,9 @@ mutable struct StateMachine
             new(block, previous_state, state_count, general_table)
         end
 end
+
+function next_block!(sm::StateMachine, state)::UInt32
+    @assert state >= 0 && state < sm.state_number
+    sm.previous_state = state
+    return sm.state_count[state+1] >> 16
+end
