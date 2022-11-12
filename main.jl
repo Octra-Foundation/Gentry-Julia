@@ -22,3 +22,15 @@ function next_block!(sm::StateMachine, state)::UInt32
     sm.previous_state = state
     return sm.state_count[state+1] >> 16
 end
+
+function update!(sm::StateMachine, rm_vector, limit=255)::Nothing
+    block = sm.state_count[sm.previous_state+1] & 255
+    next_block = sm.state_count[sm.previous_state+1] >> 14
+
+    if block < limit
+        sm.state_count[sm.previous_state+1] += 1
+        delta = (((rm_vector << 18) - next_block) * sm.general_table[block+1]) & 0xffffff00
+        sm.state_count[sm.previous_state+1] = unsafe_trunc(UInt32, sm.state_count[sm.previous_state+1] + delta)
+    end
+    nothing
+end
