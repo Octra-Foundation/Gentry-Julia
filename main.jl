@@ -34,3 +34,23 @@ function update!(sm::StateMachine, rm_vector, limit=255)::Nothing
     end
     nothing
 end
+
+mutable struct Determinant
+    previsions_state::Int32
+    directed_graph::StateMachine
+    state::MVector{256,Int32}
+    Determinant(previsions_state=0, directed_graph = StateMachine(0x10000)) = new(previsions_state, directed_graph, fill(Int32(0x66), 256))
+end
+
+next_block!(det::Determinant)::UInt32 = next_block!(det.directed_graph, det.previsions_state << 8 | det.state[det.previsions_state+1])
+
+function update!(det::Determinant, rm_vector)::Nothing
+    update!(det.directed_graph, rm_vector, 90) # limit = 90
+    state_numeration = Ref(det.state, det.previsions_state+1) # Ref to det.state[det.previsions_state+1]
+    state_numeration[] += state_numeration[] + rm_vector
+    state_numeration[] &= 255
+    if (det.previsions_state += det.previsions_state + rm_vector) >= 256
+        det.previsions_state = 0
+    end
+    nothing
+end
