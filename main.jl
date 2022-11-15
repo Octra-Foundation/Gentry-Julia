@@ -54,3 +54,20 @@ function update!(det::Determinant, rm_vector)::Nothing
     end
     nothing
 end
+
+        
+function alignment!(enc::Encoder)::Nothing
+    if enc.codec_mode == DECODE_DATA
+        return nothing
+    end
+    while iscondition(enc.vector_x, enc.vector_y) # (((enc.vector_x ⊻ enc.vector_y) & 0xff000000) == 0)
+        #write(AP, unsafe_trunc(UInt8, enc.vector_y >> 24))
+        enc.vector_x, enc.vector_y = shifts(enc.vector_x, enc.vector_y) #enc.vector_x <<= 8; enc.vector_y = (enc.vector_y << 8) + 255
+    end
+    write(enc.soup, unsafe_trunc(UInt8, enc.vector_y >> 24))
+    nothing
+end # function alignment!
+
+@inline iscondition(vector_x,vector_y) = (((vector_x ⊻ vector_y) & 0xff000000) == 0)
+
+@inline shifts(vector_x, vector_y) = (vector_x <<= 8, (vector_y << 8) + 255)
