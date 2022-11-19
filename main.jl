@@ -54,6 +54,33 @@ function update!(det::Determinant, rm_vector)::Nothing
     end
     nothing
 end
+     
+@enum Mode ENCODE_DATA DECODE_DATA
+
+mutable struct Encoder
+    determinant::Determinant
+    mode::Mode
+    block::IOStream
+    vector_x::UInt32
+    vector_y::UInt32
+    lambda::UInt32
+    function Encoder(io_mode::Mode, file_stream::IOStream)
+        lambda = 0
+        if io_mode == DECODE_DATA
+            for i in 1:4
+                if eof(file_stream)
+                    byte = UInt8(0)
+                else
+                    byte = read(file_stream, UInt8)
+                end
+                lambda = (lambda << 8) + (byte & 0xff)
+            end
+        end
+        vector_x = 0
+        vector_y = 0xffffffff
+        new(Determinant(), io_mode, file_stream, vector_x, vector_y, lambda)
+    end
+end 
 
         
 function alignment!(enc::Encoder)::Nothing
